@@ -2,7 +2,7 @@
 
 
 
-# TerraForm
+# Terraform
 é uma ferramenta para construir, alterar e configurar infra-estrutura de maneira segura e eficiente. A Terraform pode gerenciar provedores de serviços existentes e populares, bem como soluções internas personalizadas.
 
 
