@@ -1,0 +1,98 @@
+---
+
+- hosts: gitlab
+  become: yes
+  vars:
+
+    #POSTGRESQL#
+    DB_USER: "gitlab"
+    DB_PASS: "password"
+    DB_NAME: "gitlabhq_production"
+    DB_EXTENSION: "pg_trgm"
+    
+    #REDIS#
+    REDIS_HOST: "redis"
+    REDIS_PORT: "6379"
+    
+    #GITLAB#
+    GITLAB_HOST: ""  #"137.117.46.66"
+    GITLAB_PORT: "10080"
+    GITLAB_SSH: "10022"
+    SECRETS_DB_KEY_BASE: "long-and-random-alphanumeric-string"
+    SECRETS_SECRET_KEY_BASE: "long-and-random-alphanumeric-string"
+    SECRETS_OTP_KEY_BASE: "long-and-random-alphanumeric-string"
+    
+  tasks:
+    #- name: "Give Permission Sudo"
+    #  command: "usermod -aG docker ellan"
+
+    
+    - name: "Download and Run Redis"
+      command: "{{ item  }}"
+      with_items:
+        - "docker pull sameersbn/redis:4.0.9-1"
+        - "docker run 
+             -d \
+             --volume /srv/docker/gitlab/redis:/var/lib/redis \
+             --restart=always \
+             --name=redis \
+             sameersbn/redis:4.0.9-1"
+    
+    
+    - name: "Download and Run Postgresql"
+      command: "{{ item  }}"
+      with_items:
+        - "docker pull sameersbn/postgresql:10"
+        - "sudo docker run
+             -d \
+             --volume /srv/docker/gitlab/postgresql:/var/lib/postgresql:Z \
+             --restart=always \
+             --name=postgresql
+             --env 'DB_USER={{ DB_USER  }}' \
+             --env 'DB_PASS={{ DB_PASS  }}' \
+             --env 'DB_NAME={{ DB_NAME  }}' \
+             --env 'DB_EXTENSION={{ DB_EXTENSION  }}'
+             sameersbn/postgresql:10"
+    
+     
+    - name: "Download and Run Gitlab"
+      command: "{{ item }}"
+      with_items:
+        - "docker pull sameersbn/gitlab:11.3.5"
+        - "sudo docker run 
+             -d \
+             --volume /srv/docker/gitlab/gitlab:/home/git/data \
+             --link postgresql:postgresqlio \
+             --link redis:redisio \
+             --publish {{ GITLAB_PORT }}:80 \
+             --publish {{ GITLAB_SSH }}:22 \
+             --env 'DEBUG=false' \
+             --env 'DB_ADAPTER=postgresql' \
+             --env 'DB_HOST=postgresqlio' \
+             --env 'DB_PORT=5432' \
+             --env 'DB_USER={{ DB_USER }}' \
+             --env 'DB_PASS={{ DB_PASS }}' \
+             --env 'DB_NAME={{ DB_NAME }}' \
+             --env 'REDIS_HOST=redisio' \
+             --env 'REDIS_PORT={{ REDIS_PORT }}' \
+             --env 'GITLAB_HOST={{ GITLAB_HOST }}' \
+             --env 'GITLAB_PORT={{ GITLAB_PORT }}' \
+             --env 'GITLAB_SSH_PORT={{ GITLAB_SSH }}' \
+             --env 'GITLAB_SECRETS_DB_KEY_BASE={{ SECRETS_DB_KEY_BASE }}' \
+             --env 'GITLAB_SECRETS_SECRET_KEY_BASE={{ SECRETS_SECRET_KEY_BASE }}' \
+             --env 'GITLAB_SECRETS_OTP_KEY_BASE={{ SECRETS_OTP_KEY_BASE }}' \
+             --restart=always \
+             --name=gitlab \
+             sameersbn/gitlab:11.3.5"
+    
+    - name: "Download and Run Gitlab Runner"
+      command: "{{ item }}"
+      with_items:
+        - "docker pull gitlab/gitlab-runner:v11.3.1"
+        - "docker run
+             -d \
+             --volume /var/run/docker.sock:/run/docker.sock \
+             --volume /srv/gitlab-runner/config:/etc/gitlab-runner \
+             --restart=always
+             --name=gitlab_runner
+             gitlab/gitlab-runner:v11.3.1"

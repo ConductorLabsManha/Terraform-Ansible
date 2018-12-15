@@ -1,0 +1,50 @@
+[install bofore]
+
+ - sudo apt-get install -y ansible
+ - sudo apt-get install sshpass
+
+--------------------------------------------------------------------
+
+[in /etc/ansible/hosts]
+
+ [group_name]
+ ip
+
+ [group_name:vars]
+   ansible_ssh_user=ssh_user
+   ansible_ssh_pass=ssh_pass
+   ansible_sudo_pass=sudo_pass
+
+--------------------------------------------------------------------
+
+[in /etc/ansible/ansible.cfg]
+
+ [defaults]
+ host_key_checking = False
+ jinja2_extensions = jinja2.ext.do
+ hash_behaviour=merge
+
+ [ssh_connection]
+ pipelining = True
+ control_path = /tmp/ansible-ssh-%%h-%%p-%%r
+
+--------------------------------------------------------------------
+
+[install docker in all machines from /etc/ansible/hosts]
+ - ansible-playbook ansible-playbook-docker.yml -b
+
+[install e run rancher]
+ - ansible-playbook ansible-playbook-rancher.yml -b
+ [ports]
+   - 80
+   - 22
+
+[install e run gitlab]
+ - ansible-playbook ansible-playbook-gitlab.yml -b
+ [ports]
+   - 80
+   - 22
+   - 10080
+   - 10022
+   - 5432
+   - 6379

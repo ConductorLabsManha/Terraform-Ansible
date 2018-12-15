@@ -1,0 +1,15 @@
+[gitlab]
+137.116.112.16
+
+[gitlab:vars]
+ansible_ssh_user=erick
+ansible_ssh_pass=erick123456789*
+ansible_sudo_pass=erick123456789*
+
+[rancher]
+168.62.61.232
+
+[rancher:vars]
+ansible_ssh_user=erick
+ansible_ssh_pass=erick123456789*
+ansible_sudo_pass=erick123456789*
